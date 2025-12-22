@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ShoppingCart, Trash2 } from 'lucide-react';
+import { X, ShoppingCart, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getCart, removeFromCart, getCartTotal } from '@/lib/cart';
@@ -15,6 +15,7 @@ interface CartSidebarProps {
 
 export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const [cart, setCart] = useState<CartItemType[]>([]);
+  const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     updateCart();
@@ -31,9 +32,20 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     setCart(getCart());
   };
 
-  const handleRemoveItem = (productId: string, variant?: Record<string, string>) => {
+  const handleRemoveItem = async (productId: string, variant?: Record<string, string>) => {
+    const itemKey = `${productId}-${JSON.stringify(variant || {})}`;
+    setRemovingItems(prev => new Set(prev).add(itemKey));
+
+    await new Promise(resolve => setTimeout(resolve, 300));
+
     removeFromCart(productId, variant);
     updateCart();
+
+    setRemovingItems(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(itemKey);
+      return newSet;
+    });
   };
 
   const subtotal = getCartTotal(cart);
@@ -86,7 +98,10 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
             <>
               <ScrollArea className="flex-1 p-4">
                 <div className="space-y-4">
-                  {cart.map((item, index) => (
+                  {cart.map((item, index) => {
+                    const itemKey = `${item.product.id}-${JSON.stringify(item.variant || {})}`;
+                    const isRemoving = removingItems.has(itemKey);
+                    return (
                     <div
                       key={`${item.product.id}-${index}`}
                       className="flex gap-4 pb-4 border-b last:border-0"
@@ -128,14 +143,20 @@ export function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                               size="icon"
                               className="h-6 w-6 mt-2"
                               onClick={() => handleRemoveItem(item.product.id, item.variant)}
+                              disabled={isRemoving}
                             >
-                              <Trash2 className="h-4 w-4 text-red-500" />
+                              {isRemoving ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+                              ) : (
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              )}
                             </Button>
                           </div>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </ScrollArea>
 

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/supabase/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Heart, ChevronLeft } from 'lucide-react';
+import { ShoppingCart, Heart, ChevronLeft, Loader2 } from 'lucide-react';
 import { addToCart } from '@/lib/cart';
 import { useToast } from '@/hooks/use-toast';
 import ProductGrid from '@/components/product-grid';
@@ -20,13 +20,15 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const router = useRouter();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
 
   const images = Array.isArray(product.images) ? product.images : [];
   const productImages: string[] = images.length > 0
     ? (images as string[])
     : ['https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=1200'];
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product.stock === 0) {
       toast({
         title: 'Out of Stock',
@@ -36,6 +38,10 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       return;
     }
 
+    setIsAddingToCart(true);
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     addToCart(product, quantity);
     window.dispatchEvent(new Event('cartUpdated'));
 
@@ -43,10 +49,27 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       title: 'Added to cart',
       description: `${quantity} × ${product.name}`,
     });
+
+    setIsAddingToCart(false);
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
+  const handleBuyNow = async () => {
+    if (product.stock === 0) {
+      toast({
+        title: 'Out of Stock',
+        description: 'This product is currently unavailable',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsBuyingNow(true);
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    addToCart(product, quantity);
+    window.dispatchEvent(new Event('cartUpdated'));
+
     router.push('/cart');
   };
 
@@ -117,21 +140,37 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 size="lg"
                 className="flex-1 gap-2"
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || isAddingToCart || isBuyingNow}
               >
-                <ShoppingCart className="h-5 w-5" />
-                Add to Cart
+                {isAddingToCart ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-5 w-5" />
+                    Add to Cart
+                  </>
+                )}
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="flex-1"
                 onClick={handleBuyNow}
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || isAddingToCart || isBuyingNow}
               >
-                Buy Now
+                {isBuyingNow ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  'Buy Now'
+                )}
               </Button>
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" disabled={isAddingToCart || isBuyingNow}>
                 <Heart className="h-5 w-5" />
               </Button>
             </div>
