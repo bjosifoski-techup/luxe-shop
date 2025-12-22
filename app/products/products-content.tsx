@@ -25,8 +25,19 @@ export default function ProductsContent() {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, [selectedCategory, sortBy, searchParams]);
+    const categoryParam = searchParams.get('category');
+    if (categoryParam && categoryParam !== selectedCategory) {
+      setSelectedCategory(categoryParam);
+    } else if (!categoryParam && selectedCategory !== 'all') {
+      setSelectedCategory('all');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (selectedCategory === 'all' || categories.length > 0) {
+      fetchProducts();
+    }
+  }, [selectedCategory, sortBy, categories.length]);
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
