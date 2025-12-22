@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/supabase/types';
 import { Button } from '@/components/ui/button';
@@ -11,6 +9,7 @@ import { ShoppingCart, Heart, ChevronLeft } from 'lucide-react';
 import { addToCart } from '@/lib/cart';
 import { useToast } from '@/hooks/use-toast';
 import ProductGrid from '@/components/product-grid';
+import { ProductImageGallery } from '@/components/product-image-gallery';
 
 interface ProductDetailClientProps {
   product: Product;
@@ -20,11 +19,12 @@ interface ProductDetailClientProps {
 export default function ProductDetailClient({ product, relatedProducts }: ProductDetailClientProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
   const images = Array.isArray(product.images) ? product.images : [];
-  const productImages = images.length > 0 ? images : ['https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=1200'];
+  const productImages: string[] = images.length > 0
+    ? (images as string[])
+    : ['https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=1200'];
 
   const handleAddToCart = () => {
     if (product.stock === 0) {
@@ -62,45 +62,11 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       </Button>
 
       <div className="grid md:grid-cols-2 gap-8 mb-16">
-        <div className="space-y-4">
-          <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
-            <Image
-              src={productImages[selectedImage] as string}
-              alt={product.name}
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
-            {product.stock === 0 && (
-              <Badge className="absolute top-4 right-4" variant="secondary">
-                Out of Stock
-              </Badge>
-            )}
-          </div>
-
-          {productImages.length > 1 && (
-            <div className="grid grid-cols-4 gap-4">
-              {productImages.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`relative aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedImage === index ? 'border-primary' : 'border-transparent'
-                  }`}
-                >
-                  <Image
-                    src={image as string}
-                    alt={`${product.name} ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="25vw"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProductImageGallery
+          images={productImages}
+          productName={product.name}
+          isOutOfStock={product.stock === 0}
+        />
 
         <div className="space-y-6">
           <div>

@@ -15,10 +15,12 @@ import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
 import { getCartItemCount, getCart } from '@/lib/cart';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { CartSidebar } from '@/components/cart-sidebar';
 
 export default function Navigation() {
   const { user, profile, signOut } = useAuth();
   const [cartCount, setCartCount] = useState(0);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     const updateCartCount = () => {
@@ -68,16 +70,19 @@ export default function Navigation() {
               </Button>
             </Link>
 
-            <Link href="/cart" className="relative">
-              <Button variant="ghost" size="icon">
-                <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                    {cartCount}
-                  </Badge>
-                )}
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={() => setIsCartOpen(true)}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                  {cartCount}
+                </Badge>
+              )}
+            </Button>
 
             {user ? (
               <DropdownMenu>
@@ -152,6 +157,7 @@ export default function Navigation() {
           </div>
         </div>
       </div>
+      <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </nav>
   );
 }

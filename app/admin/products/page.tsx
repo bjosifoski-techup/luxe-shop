@@ -277,6 +277,28 @@ export default function AdminProductsPage() {
                   rows={4}
                   placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
                 />
+                {formData.images && (
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {formData.images
+                      .split('\n')
+                      .map(url => url.trim())
+                      .filter(url => url.length > 0)
+                      .map((url, index) => (
+                        <div key={index} className="relative aspect-square bg-gray-100 rounded overflow-hidden border">
+                          <img
+                            src={url}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.parentElement!.innerHTML = '<div class="flex items-center justify-center h-full text-xs text-gray-400">Invalid URL</div>';
+                            }}
+                          />
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -314,32 +336,50 @@ export default function AdminProductsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {products.map((product) => (
-              <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{product.name}</h3>
-                    {product.featured && <Badge>Featured</Badge>}
+            {products.map((product) => {
+              const productImages = Array.isArray(product.images) && product.images.length > 0
+                ? product.images
+                : ['https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=400'];
+
+              return (
+                <div key={product.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                  <div className="relative w-20 h-20 flex-shrink-0 bg-gray-100 rounded overflow-hidden border">
+                    <img
+                      src={productImages[0] as string}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {productImages.length > 1 && (
+                      <Badge className="absolute bottom-1 right-1 h-5 px-1 text-xs">
+                        +{productImages.length - 1}
+                      </Badge>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600">
-                    ${product.price.toFixed(2)} • Stock: {product.stock} • {product.slug}
-                  </p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{product.name}</h3>
+                      {product.featured && <Badge>Featured</Badge>}
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      ${product.price.toFixed(2)} • Stock: {product.stock} • {product.slug}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(product.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(product.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
