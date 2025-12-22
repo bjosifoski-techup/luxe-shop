@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ImageUploader } from '@/components/image-uploader';
 
 export default function AdminProductsPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function AdminProductsPage() {
     category_id: '',
     stock: '',
     featured: false,
-    images: '',
+    images: [] as string[],
   });
 
   useEffect(() => {
@@ -77,14 +78,14 @@ export default function AdminProductsPage() {
       category_id: '',
       stock: '',
       featured: false,
-      images: '',
+      images: [],
     });
     setEditingProduct(null);
   };
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
-    const images = Array.isArray(product.images) ? product.images.join('\n') : '';
+    const images = Array.isArray(product.images) ? product.images as string[] : [];
     setFormData({
       name: product.name,
       slug: product.slug,
@@ -101,11 +102,6 @@ export default function AdminProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const imagesArray = formData.images
-      .split('\n')
-      .map(url => url.trim())
-      .filter(url => url.length > 0);
-
     const productData = {
       name: formData.name,
       slug: formData.slug,
@@ -114,7 +110,7 @@ export default function AdminProductsPage() {
       category_id: formData.category_id || null,
       stock: parseInt(formData.stock),
       featured: formData.featured,
-      images: imagesArray,
+      images: formData.images,
     };
 
     try {
@@ -269,36 +265,12 @@ export default function AdminProductsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="images">Image URLs (one per line)</Label>
-                <Textarea
-                  id="images"
-                  value={formData.images}
-                  onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                  rows={4}
-                  placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
+                <Label>Product Images</Label>
+                <ImageUploader
+                  images={formData.images}
+                  onChange={(images) => setFormData({ ...formData, images })}
+                  maxImages={10}
                 />
-                {formData.images && (
-                  <div className="grid grid-cols-4 gap-2 mt-2">
-                    {formData.images
-                      .split('\n')
-                      .map(url => url.trim())
-                      .filter(url => url.length > 0)
-                      .map((url, index) => (
-                        <div key={index} className="relative aspect-square bg-gray-100 rounded overflow-hidden border">
-                          <img
-                            src={url}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.parentElement!.innerHTML = '<div class="flex items-center justify-center h-full text-xs text-gray-400">Invalid URL</div>';
-                            }}
-                          />
-                        </div>
-                      ))}
-                  </div>
-                )}
               </div>
               <div className="flex items-center gap-2">
                 <input
